@@ -7,7 +7,7 @@ It will be built with Craftyjs: http://craftyjs.com/
 
 Release schedule, in order:
 
-1.0: Human vs AI
-Next: Human vs Human (migrate verification to server system, implement multiplayer via websocket - likely Node)
-Then: Map editor
-Someday: Story mode
+1.0: Human vs AI  
+Next: Human vs Human (migrate verification to server system, implement multiplayer via websocket - likely Node)  
+Then: Map editor  
+Someday: Story mode  
