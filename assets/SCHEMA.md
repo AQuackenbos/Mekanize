@@ -85,19 +85,25 @@ Cores extend off the basic item schema with more information.  They should never
 	hdd:
 	{
 		id: 0, //player hdd id
-		body: 0, //required body ID (set when hdd created)
+		body: 0, //required body type ID (set when hdd created)
+		programming: 
+		{
+			0: 0, //id of program: levels invested
+		}
 	}
 
 ## Programming
 
     program:
 	{
-	
+		id: 0, //program id
+		
 	}
 	
 ### Moves
 	
 	move:
 	{
-	
+		id: 0, //move id
+		core: 0, //core type alignment
 	}
