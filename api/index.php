@@ -1,199 +1,73 @@
 <?php 
+define('MEK_API',true);
+require_once('_database.php');
 
-require_once('require.php');
+class Api {
 
-initRequest();
-
-function initRequest()
-{
-	$_parameters = explode('/',trim($_SERVER['REQUEST_URI'],' /'));
-	
-	$_requestType = $_parameters[1];
-	$_query = array();
-	
-	$idSearch = false;
-	//0 = 'api'
-
-	if($_SERVER['QUERY_STRING'])
-	{
-		parse_str($_SERVER['QUERY_STRING'],$_query);
-		$idSearch = false;
-	}
-
-	if(stripos($_requestType,'?')!==false)
-	{
-		$split = explode('?',$_requestType);
-		$_requestType = reset($split);
-		$idSearch = false;
-	}
-
-	if(empty($_query) && count($_parameters) > 2)
-	{
-		$_query['id'] = $_parameters[2];
-		$idSearch = true;
-	}
-
-	$acceptedRequests = array('characters','episodes','locations','organizations');
-
-	if(!in_array($_requestType,$acceptedRequests))
-	{
-		echo json_encode('{}');
-		exit;
-	}
-	
-	_getData($_requestType,$_query,$idSearch);
-}
-
-function _getMap($type)
-{
-	$maps = array(
-		'character' => array(
-			'id' => 'ROW:id',
-			'name' => 'ROW:name',
-			'desc_short' => 'ROW:description_short',
-			'desc_loon' => 'ROW:description_full',
-			'first_seen_id' => 'RELATION_SINGLE:relation_firstsightings',
-			'episode_ids' => 'RELATION:relation_episodes_characters:episode_id ASC',
-			'preview_image' => 'IMAGES:preview',
-			'main_image' => 'IMAGES:main',
-			'images' => 'IMAGES:gallery',
-			'background_images' => 'IMAGES:background',
-		),
-		'episode' => array(
-			'id'	=> 'ROW:id',
-			'title' => 'ROW:title',
-			'desc_short' => 'ROW:description_short',
-			'desc_long' => 'ROW:description_full',
-			'season' => 'ROW:season',
-			'episode' => 'ROW:season_episode',
-			'preview_image' => 'IMAGES:preview',
-			'main_image' => 'IMAGES:main',
-			'images' => 'IMAGES:gallery',
-			'background_images' => 'IMAGES:background',
-			'first_sight_ids' => 'RELATION:relation_firstsightings',
-			'character_ids' => 'RELATION:relation_episodes_characters:character_id ASC'
-		),
-		'organization' => array(),
-		'location' => array()
+	protected $_idSearch;
+	protected $_query;
+	protected static $_acceptedRequests = array(
+		'meks' => 'MekController'
 	);
 	
-	return $maps[$type];
-}
-
-function _output($wrappedObject)
-{
-	echo json_encode($wrappedObject);
-}
-
-function _mapData($type,$raw)
-{
-	$single = _getSingular($type);
-	$map = _getMap($single);
-	$object = array();
-	
-	foreach($map as $objectKey => $value)
+	public function initRequest()
 	{
-		@list($location,$relevant,$sort) = explode(':',$value);
+		$_parameters = explode('/',trim($_SERVER['REQUEST_URI'],' /'));
 		
-		switch($location)
+		$_requestType = $_parameters[1];
+		$_query = array();
+		
+		$idSearch = false;
+		//0 = 'api'
+
+		if($_SERVER['QUERY_STRING'])
 		{
-			case 'ROW':
-				$object[$objectKey] = $raw[$relevant];
-				break;
-			case 'RELATION':
-			case 'RELATION_SINGLE':
-				$params = array(
-					$single.'_id' => $raw['id'],
-				);
-				
-				$result = _getDbResults($relevant,$params,$sort);
-				
-				$data = array();
-				
-				while($row = $result->fetch(PDO::FETCH_ASSOC))
-				{
-					$colCount = count($row);
-					//if 2 => Assume its a core relation and just store values
-					if($colCount == 2)
-					{
-						foreach($row as $key=>$val)
-						{
-							if($key == $single.'_id') continue;
-							if($location == 'RELATION_SINGLE')
-							{
-								$object[$objectKey] = intval($val);
-							}
-							else
-							{
-								$data[] = intval($val);
-							}
-						}
-					}
-					//otherwise, dump the whole object into the results
-					else
-					{
-						$data[] = $row;
-					}
-				}
-				
-				if($location == 'RELATION')
-					$object[$objectKey] = $data;
-				
-				break;
-			case 'IMAGES':
-				$params = array(
-					'related_id_type' => $type,
-					'related_id' => $raw['id'],
-					'type' => $relevant
-				);
-				
-				$result = _getDbResults('images',$params,$sort);
-				$data = array();
-				
-				while($row = $result->fetch(PDO::FETCH_ASSOC))
-				{
-					$data[] = $row['url'];
-				}
-				
-				$object[$objectKey] = implode(',',$data);
-				break;
+			parse_str($_SERVER['QUERY_STRING'],$_query);
+			$idSearch = false;
 		}
-	}
-	
-	return $object;
-}
 
-function _getSingular($type)
-{
-	//assume [^single]s for now
-	return trim($type,'s');
-}
-
-function _getData($type,$params,$single)
-{
-	$dbResults = _getDbResults($type,$params);
-	
-	if($single)
-	{
-		$row = $dbResults->fetch(PDO::FETCH_ASSOC);
-		
-		$object = _mapData($type,$row);
-		
-		$wrapper = array(_getSingular($type) => $object);
-	}
-	else
-	{
-		$wrapper = array($type => array());
-		
-		while($row = $dbResults->fetch(PDO::FETCH_ASSOC))
+		if(stripos($_requestType,'?')!==false)
 		{
-			$object = _mapData($type,$row);
-			
-			$wrapper[$type][] = $object;
+			$split = explode('?',$_requestType);
+			$_requestType = reset($split);
+			$idSearch = false;
 		}
+
+		if(empty($_query) && count($_parameters) > 2)
+		{
+			$_query['id'] = $_parameters[2];
+			$idSearch = true;
+		}
+
+		if(!in_array($_requestType,$this->_acceptedRequests))
+		{
+			return false;
+		}
+		
+		$this->_idSearch = $idSearch;
+		$this->_query = $_query;
+		return $this->_acceptedRequests[$_requestType];
 	}
-	
-	_output($wrapper);
+
+	public function getQuery()
+	{
+		return $this->_query;
+	}
+
+	public function isIdSearch()
+	{
+		return $this->_idSearch;
+	}
 }
 
-?>
+
+$controller = new Api()->initRequest();
+if($controller === false)
+{
+	echo '{"error":"Bad Request"}';
+	exit;
+}
+require_once('api/Controllers/AbstractController.php');
+require_once('api/Controllers/'.$controller.'.php');
+echo json_encode(new $controller($api->getQuery(),$api->isIdSearch())->getResultObject());
+exit;

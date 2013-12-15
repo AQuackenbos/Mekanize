@@ -59,6 +59,7 @@ Cores extend off the basic item schema with more information.  They should never
 
 	core: 
 	{
+		id: 0, //type ID
 		vs:
 		{
 			0: 1.0//opposing type ID:received damage multiplier

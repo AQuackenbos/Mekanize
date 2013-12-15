@@ -12,13 +12,15 @@
 	<body>
 		<script type="text/x-handlebars" data-template-name="application">
 			<div class="header-nav">
-				{{#linkTo "index" id="home-link"}}THE GRAND GALACTIC INQUISITOR{{/linkTo}}
+				{{#linkTo "index" id="home-link"}}Mekanize{{/linkTo}}
+				<!--
 				{{#view App.NavView}}
 					{{#linkTo "characters"}}CHARACTERS{{/linkTo}}
 					{{#linkTo "episodes"}}EPISODES{{/linkTo}}
 					{{#linkTo "locations"}}LOCATIONS{{/linkTo}}
 					{{#linkTo "organizations"}}ORGANIZATIONS{{/linkTo}}
 				{{/view}}
+				-->
 			</div>
 			<div class="global-container">
 				{{outlet}}
